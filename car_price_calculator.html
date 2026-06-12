@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tính giá xe</title>
+    <link rel="stylesheet" href="car_price_calculator.css">
+</head>
+
+<body>
+    <div class="page-shell">
+        <header class="hero">
+            <div>
+                <span class="eyebrow">Bảng tính khoản vay</span>
+                <h1>Tính nhanh giá xe và khoản vay</h1>
+                <p>Nhập giá xe, trả trước và lãi suất để xem số tiền góp hàng tháng cho các kỳ hạn cố định.</p>
+            </div>
+            <div class="badge">Kỳ hạn cố định: 6, 9, 12, 15, 18, 21, 24, 36 tháng</div>
+        </header>
+
+        <main class="calculator-grid">
+            <section class="panel panel-input">
+                <h2>Thông tin vay</h2>
+
+                <div class="field">
+                    <label for="vehicle-price">Giá xe</label>
+                    <input id="vehicle-price" type="text" inputmode="numeric" placeholder="0" autocomplete="off">
+                </div>
+
+                <div class="field field-row">
+                    <div class="field half">
+                        <label for="downpayment">Trả trước</label>
+                        <input id="downpayment" type="text" inputmode="numeric" placeholder="0" autocomplete="off">
+                    </div>
+                    <div class="field half">
+                        <label for="downpayment-percent">% trả trước</label>
+                        <input id="downpayment-percent" type="number" min="0" max="100" step="0.01" placeholder="0.00" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="interest-input">Lãi suất (ví dụ 1.15)</label>
+                    <input id="interest-input" type="number" min="0" step="0.01" placeholder="0.00" autocomplete="off">
+                </div>
+
+                <div class="field">
+                    <label for="annual-rate">Lãi suất năm</label>
+                    <input id="annual-rate" type="text" disabled placeholder="Tự động" autocomplete="off">
+                </div>
+
+                <button id="calculate-btn" class="primary-btn">Tính khoản vay</button>
+            </section>
+
+            <section class="panel panel-results">
+                <div class="result-header">
+                    <div>
+                        <p class="result-label">Kết quả nhanh</p>
+                        <h2>Chi tiết khoản vay</h2>
+                    </div>
+                    <div class="result-status" id="result-status">Chưa có dữ liệu</div>
+                </div>
+
+                <div class="summary-cards">
+                    <article class="summary-card">
+                        <p>Khoản vay</p>
+                        <strong id="loan-amount">0 ₫</strong>
+                    </article>
+                    <article class="summary-card">
+                        <p>Tiền bảo hiểm</p>
+                        <strong id="insurance-amount">0 ₫</strong>
+                    </article>
+                    <article class="summary-card">
+                        <p>Tổng nợ</p>
+                        <strong id="total-debt">0 ₫</strong>
+                    </article>
+                </div>
+
+                <div class="term-list">
+                    <h3>Tiền góp theo kỳ hạn</h3>
+                    <div class="term-grid" id="term-grid"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="car_price_calculator.js"></script>
+</body>
+
+</html>
