@@ -1,4 +1,4 @@
-const terms = [6, 9, 12, 15, 18, 21, 24, 36];
+const terms = [6, 9, 12, 15, 18, 21, 24];
 const interestLookup = [
     { x: 0.49, y: 10.6 },
     { x: 0.69, y: 15.5 },
@@ -13,6 +13,32 @@ const interestLookup = [
     { x: 1.49, y: 32 },
     { x: 1.69, y: 36 }
 ];
+
+// current available terms (may be restricted by selected interest)
+let currentTerms = [...terms];
+
+// special rules for certain interest options
+const specialInterestRules = {
+    0.55: { minDownpaymentPercent: 10, termRange: [15, 24] },
+    0.69: { minDownpaymentPercent: 20, termRange: [6, 12] },
+    0.79: { minDownpaymentPercent: 10, termRange: [6, 12] },
+};
+
+function applyInterestRules(x) {
+    const key = Number(x);
+    const rule = specialInterestRules[key];
+    // reset to defaults
+    currentTerms = [...terms];
+    if (rule) {
+        const [minT, maxT] = rule.termRange;
+        currentTerms = terms.filter((t) => t >= minT && t <= maxT);
+        // do NOT auto-change user inputs here; validation happens in calculate()
+    }
+}
+
+function getInterestRule(x) {
+    return specialInterestRules[Number(x)] || null;
+}
 
 const vehiclePriceInput = document.getElementById('vehicle-price');
 const downpaymentInput = document.getElementById('downpayment');
@@ -159,7 +185,15 @@ function genTraTienSuggest() {
         btn.type = 'button';
         btn.className = 'suggest-item';
         btn.innerHTML = `<span>${formatMoney(n)} ₫</span><span style="color:#1d4ed8;font-weight:600">${percent}%</span><span class="suggest-expand">…</span>`;
+        const rule = getInterestRule(interestInput.value || 0);
+        const minPercent = rule ? rule.minDownpaymentPercent : 0;
+        if (Number(percent) < minPercent) {
+            btn.disabled = true;
+            btn.className += ' disabled-suggest';
+            btn.title = `Yêu cầu trả trước tối thiểu ${minPercent}% cho lãi ${interestInput.value || '—'}`;
+        }
         btn.onclick = () => {
+            if (btn.disabled) return;
             downpaymentInput.value = formatMoney(n);
             box.innerHTML = '';
             updateDownpaymentPercent();
@@ -211,7 +245,7 @@ function showRefinedSuggestions(base, gia) {
 
 function renderTermRows(debt, monthlyRate, loan) {
     termGrid.innerHTML = '';
-    terms.forEach((term) => {
+    currentTerms.forEach((term) => {
         const payment = Math.abs(PMT(monthlyRate, term, debt));
         const monthlyPayment = roundup1000(payment) + 17000;
         const card = document.createElement('article');
@@ -241,6 +275,7 @@ function renderInterestOptions() {
         btn.textContent = x;
         btn.addEventListener('click', () => {
             interestInput.value = x;
+            applyInterestRules(Number(x));
             const annual = interpolateRate(Number(x), interestLookup);
             annualRateInput.value = `${annual.toFixed(2)}%`;
             highlightInterestButton(x);
@@ -324,7 +359,7 @@ async function exportQuote() {
     exportDiv.style.fontSize = '26px';
     exportDiv.style.lineHeight = '1.6';
 
-    const planLines = terms
+    const planLines = currentTerms
         .map((term) => {
             const payment = Math.abs(PMT(monthlyRate, term, totalDebt));
             const monthlyPayment = roundup1000(payment) + 17000;
@@ -392,6 +427,21 @@ function calculate(isAuto = false) {
         }
         return;
     }
+    // validate against interest-specific rules
+    const curPercent = price ? (downpayment / price) * 100 : 0;
+    const rule = getInterestRule(interestValue);
+    if (rule && curPercent < rule.minDownpaymentPercent) {
+        const msg = `Với lãi ${interestValue}, yêu cầu trả trước tối thiểu ${rule.minDownpaymentPercent}%`;
+        if (!isAuto) {
+            alert(msg);
+            downpaymentInput.focus();
+        } else {
+            resultStatus.textContent = msg;
+            resultStatus.style.background = '#fff4f4';
+            resultStatus.style.color = '#dc2626';
+        }
+        return;
+    }
     const loan = price - downpayment;
     const insurance = loan * 0.07;
     const totalDebt = loan + insurance;
@@ -421,6 +471,7 @@ downpaymentPercentInput.addEventListener('input', () => {
 
 interestInput.addEventListener('input', () => {
     const rate = Number(interestInput.value) || 0;
+    applyInterestRules(rate);
     annualRateInput.value = `${interpolateRate(rate, interestLookup).toFixed(2)}%`;
     highlightInterestButton(interestInput.value);
     calculate(true);
@@ -434,6 +485,7 @@ window.addEventListener('DOMContentLoaded', () => {
     modalMauSon.addEventListener('input', () => formatNumberInput(modalMauSon));
     modalGiayTo.addEventListener('input', () => formatNumberInput(modalGiayTo));
 
+    applyInterestRules(Number(interestInput.value) || 0);
     renderTermRows(0, 0, 0);
     genTraTienSuggest();
     renderInterestOptions();
